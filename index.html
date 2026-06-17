@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>พหุนาม | 15 ข้อ</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="homeView" class="panel mode-panel" aria-label="เลือกโหมดการใช้งาน">
+        <div>
+          <h1>ระบบจำนวนจริง</h1>
+          <h2 class="home-subtitle">การแยกตัวประกอบพหุนาม ทฤษฎีบทเศษเหลือ และการหารสังเคราะห์</h2>
+          <div class="home-description">
+            <p><strong>ทบทวน :</strong> ใช้ฝึกทำโจทย์เพื่อเตรียมความพร้อมก่อนเรียนหรือก่อนสอบ คะแนนจะไม่ถูกส่งไปยังครูผู้สอน</p>
+            <p><strong>แบบทดสอบ :</strong> ใช้สำหรับการทดสอบในห้องเรียนจริง ระบบจะบันทึกคะแนนและส่งให้ครูผู้สอน</p>
+            <p class="home-warning">เว็บไซต์มีระบบป้องกันการสลับหน้าจอและการใช้ application ภายนอก หากมีการสลับหน้าจอ ระบบจะสุ่มโจทย์ข้อปัจจุบันใหม่และบันทึกจำนวนครั้งที่เตือน หากถูกเตือนครบ 3 ครั้ง จะปิดการส่งคำตอบชุดนั้นและต้องเริ่มใหม่</p>
+          </div>
+        </div>
+
+        <div class="mode-grid">
+          <button id="practiceModeBtn" class="mode-choice" type="button">
+            <strong>ทบทวน</strong>
+            <span>ใช้ฝึกทำโจทย์ให้คุ้นเคยก่อนเรียนหรือก่อนสอบ</span>
+          </button>
+          <button id="testModeBtn" class="mode-choice test" type="button">
+            <strong>แบบทดสอบ</strong>
+            <span>ใช้ทำแบบทดสอบในห้องเรียนจริง</span>
+          </button>
+        </div>
+      </section>
+
+      <section id="loginView" class="panel intro-panel hidden" aria-label="กรอกข้อมูลนักเรียน">
+        <div>
+          <p class="teacher-line">แบบฝึกหัดคณิตศาสตร์</p>
+          <h1 id="loginTitle">แยกตัวประกอบพหุนาม</h1>
+          <p id="loginLead" class="lead">
+            กรอกข้อมูลก่อนเริ่มทำแบบฝึกหัด 15 ข้อ ระบบจะตรวจด้วยการคำนวณย้อนกลับ
+          </p>
+        </div>
+
+        <form id="studentForm" class="student-form">
+          <label>
+            คำนำหน้า
+            <select id="title">
+              <option value="นาย">นาย</option>
+              <option value="นางสาว">นางสาว</option>
+            </select>
+          </label>
+          <label class="wide">
+            ชื่อ - สกุล
+            <input id="name" type="text" autocomplete="name" placeholder="เช่น ปฏิญญา มุ่งหมาย" required />
+          </label>
+          <label>
+            ชื่อเล่น
+            <input id="nickname" type="text" placeholder="เช่น กาย" />
+          </label>
+          <label>
+            ห้อง
+            <input id="room" type="text" placeholder="เช่น ม.4/3" />
+          </label>
+          <label>
+            เลขที่
+            <input id="number" type="text" inputmode="numeric" placeholder="เช่น 12" />
+          </label>
+          <label class="wide">
+            ทดสอบครั้งที่
+            <select id="testRound">
+              <option value="ครั้งที่ 1">ครั้งที่ 1</option>
+              <option value="ครั้งที่ 2">ครั้งที่ 2</option>
+              <option value="ครั้งที่ 3">ครั้งที่ 3</option>
+              <option value="ครั้งที่ 4">ครั้งที่ 4</option>
+              <option value="ครั้งที่ 5">ครั้งที่ 5</option>
+            </select>
+          </label>
+          <button id="startWorkBtn" class="btn btn-primary wide" type="submit">เริ่มทำแบบฝึกหัด</button>
+        </form>
+
+        <div id="loginNote" class="note">
+          <strong>หมายเหตุเรื่องความปลอดภัย</strong>
+          <span>เว็บ static ซ่อนโค้ดไม่ได้ 100% แต่เวอร์ชันนี้ไม่ฝังชุดเฉลย และมีระบบตรวจการสลับหน้าต่าง</span>
+        </div>
+      </section>
+
+      <section id="quizView" class="panel quiz-panel hidden" aria-label="แบบฝึกหัด">
+        <header class="quiz-header">
+          <div>
+            <p id="studentTag" class="student-tag">นักเรียน: -</p>
+            <h2>แบบทดสอบจำนวน 15 ข้อ</h2>
+          </div>
+          <button id="restartBtn" class="btn btn-ghost" type="button">เริ่มใหม่</button>
+        </header>
+
+        <div id="securityStrip" class="security-strip">
+          <strong>ระบบป้องกันเปิดอยู่</strong>
+          <span id="securityText">หากสลับหน้าต่าง แอป หรือออกจากหน้านี้ ระบบจะสุ่มโจทย์ข้อปัจจุบันใหม่และบันทึกการเตือน</span>
+        </div>
+
+        <nav id="questionNav" class="question-nav" aria-label="เลือกข้อ"></nav>
