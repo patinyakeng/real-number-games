@@ -98,3 +98,99 @@
         </div>
 
         <nav id="questionNav" class="question-nav" aria-label="เลือกข้อ"></nav>
+
+        <article class="question-card">
+          <div id="expression" class="expression">x² + 5x + 6</div>
+          <p id="instruction" class="instruction">จงแยกตัวประกอบให้อยู่ในรูป (ax + b)(cx + d)</p>
+        </article>
+
+        <form id="answerForm" class="answer-card">
+          <div id="factorAnswer" class="factor-row" aria-label="กรอกตัวประกอบ">
+            <span>(</span>
+            <input id="a1" class="coef-input" type="number" inputmode="numeric" aria-label="a ตัวแรก" />
+            <span>x</span>
+            <select id="sign1" aria-label="เครื่องหมายตัวแรก">
+              <option value="1">+</option>
+              <option value="-1">-</option>
+            </select>
+            <input id="b1" type="number" inputmode="numeric" min="0" aria-label="ค่าคงที่ตัวแรก" />
+            <span>)</span>
+            <span>(</span>
+            <input id="a2" class="coef-input" type="number" inputmode="numeric" aria-label="a ตัวที่สอง" />
+            <span>x</span>
+            <select id="sign2" aria-label="เครื่องหมายตัวที่สอง">
+              <option value="1">+</option>
+              <option value="-1">-</option>
+            </select>
+            <input id="b2" type="number" inputmode="numeric" min="0" aria-label="ค่าคงที่ตัวที่สอง" />
+            <span>)</span>
+          </div>
+
+          <div id="numberAnswer" class="number-answer hidden" aria-label="กรอกคำตอบเป็นตัวเลข"></div>
+
+          <div class="answer-actions">
+            <button id="clearBtn" class="btn btn-ghost" type="button">ล้างข้อนี้</button>
+            <button id="saveBtn" class="btn btn-primary" type="submit">บันทึกคำตอบ</button>
+          </div>
+        </form>
+
+        <div id="feedback" class="feedback" role="status">พร้อมทำข้อแรกแล้ว</div>
+
+        <footer class="quiz-footer">
+          <button id="prevBtn" class="btn btn-ghost" type="button">ก่อนหน้า</button>
+          <div class="progress">
+            <span id="progressText">ตอบแล้ว 0 / 15</span>
+            <div class="progress-bar"><span id="progressBar"></span></div>
+          </div>
+          <button id="nextBtn" class="btn btn-ghost" type="button">ถัดไป</button>
+          <button id="submitBtn" class="btn btn-submit" type="button" disabled>ส่งคำตอบ</button>
+        </footer>
+      </section>
+
+      <section id="resultView" class="panel result-panel hidden" aria-label="ผลคะแนน">
+        <h2>ผลการทำแบบฝึกหัด</h2>
+        <p id="scoreLine" class="score-line">คะแนนรวม: 0 / 15</p>
+        <p id="scoreTenLine" class="score-ten-line">คิดเป็น 0/10 คะแนน</p>
+        <p id="securitySummary" class="security-summary"></p>
+        <p id="sheetMsg" class="sheet-msg"></p>
+        <div id="resultList" class="result-list"></div>
+        <div class="answer-actions">
+          <button id="againBtn" class="btn btn-primary" type="button">ทำชุดใหม่</button>
+          <button id="homeBtn" class="btn btn-ghost" type="button">กลับหน้าแรก</button>
+        </div>
+      </section>
+    </main>
+
+    <div id="focusGuard" class="focus-guard hidden" role="alert">
+      <div>
+        <strong>ระบบตรวจพบการออกจากหน้าจอแบบฝึกหัด</strong>
+        <p>โจทย์ข้อปัจจุบันถูกสุ่มใหม่แล้ว กรุณากลับมาทำต่อในหน้านี้เท่านั้น</p>
+        <button id="resumeBtn" class="btn btn-primary" type="button">รับทราบ</button>
+      </div>
+    </div>
+
+    <div id="testModeModal" class="focus-guard hidden" role="dialog" aria-modal="true" aria-labelledby="testModeTitle">
+      <div>
+        <strong id="testModeTitle">เข้าสู่โหมดแบบทดสอบ</strong>
+        <p>ใช้สำหรับทดสอบความรู้ในห้องสอบจริงเท่านั้น และจะมีการส่งคะแนนที่ทำได้ไปยังครูผู้สอน</p>
+        <div class="modal-actions">
+          <button id="startTestModeBtn" class="btn btn-submit" type="button">เริ่มทำแบบทดสอบ</button>
+          <button id="cancelTestModeBtn" class="btn btn-ghost" type="button">ยกเลิก</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="submitModal" class="focus-guard hidden" role="dialog" aria-modal="true" aria-labelledby="submitModalTitle">
+      <div>
+        <strong id="submitModalTitle">ยังตอบไม่ครบทุกข้อ</strong>
+        <p id="missingText">ยังไม่ได้ตอบบางข้อ</p>
+        <div class="modal-actions">
+          <button id="confirmSubmitBtn" class="btn btn-submit" type="button">ยืนยันการส่ง</button>
+          <button id="continueBtn" class="btn btn-ghost" type="button">กลับไปทำต่อ</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
