@@ -13,6 +13,7 @@ const state = {
   submitted: false,
   securityWarnings: 0,
   lockedBySecurity: false,
+  screenBlocked: false,
   lastSecurityAt: 0,
 };
 
@@ -67,6 +68,8 @@ const els = {
   homeBtn: document.querySelector("#homeBtn"),
   focusGuard: document.querySelector("#focusGuard"),
   resumeBtn: document.querySelector("#resumeBtn"),
+  screenGuard: document.querySelector("#screenGuard"),
+  screenGuardBtn: document.querySelector("#screenGuardBtn"),
   testModeModal: document.querySelector("#testModeModal"),
   startTestModeBtn: document.querySelector("#startTestModeBtn"),
   cancelTestModeBtn: document.querySelector("#cancelTestModeBtn"),
@@ -344,7 +347,9 @@ function startQuiz() {
   state.submitted = false;
   state.securityWarnings = 0;
   state.lockedBySecurity = false;
+  state.screenBlocked = false;
   els.submitModal.classList.add("hidden");
+  els.screenGuard.classList.add("hidden");
   els.studentTag.textContent = makeStudentTag();
   els.feedback.textContent = "พร้อมทำข้อแรกแล้ว";
   els.feedback.classList.remove("bad");
@@ -353,6 +358,7 @@ function startQuiz() {
   renderQuestion();
   updateSecurityUI();
   updateProgress();
+  updateScreenGuard();
 }
 
 function makeStudentTag() {
@@ -472,6 +478,11 @@ function readAnswer() {
 
 function saveCurrentAnswer() {
   if (state.lockedBySecurity) return;
+  if (state.mode === "test" && state.screenBlocked) {
+    els.feedback.textContent = "กรุณากลับสู่เต็มหน้าจอก่อนบันทึกคำตอบ";
+    els.feedback.classList.add("bad");
+    return;
+  }
 
   const answer = readAnswer();
   const q = state.questions[state.currentIndex];
@@ -513,7 +524,7 @@ function updateProgress() {
   const answered = state.questions.filter((q) => q.userAnswer).length;
   els.progressText.textContent = `ตอบแล้ว ${answered} / ${TOTAL_QUESTIONS}`;
   els.progressBar.style.width = `${(answered / TOTAL_QUESTIONS) * 100}%`;
-  els.submitBtn.disabled = state.lockedBySecurity;
+  els.submitBtn.disabled = state.lockedBySecurity || (state.mode === "test" && state.screenBlocked);
 }
 
 function updateButtons() {
@@ -556,6 +567,8 @@ function submitQuiz() {
   const scoreTen = convertScoreToTen(score);
 
   state.submitted = true;
+  state.screenBlocked = false;
+  els.screenGuard.classList.add("hidden");
   els.scoreLine.textContent = `คะแนนรวม: ${score} / ${TOTAL_QUESTIONS}`;
   els.scoreTenLine.textContent = `คิดเป็น ${scoreTen}/10 คะแนน`;
   els.securitySummary.textContent = `ระบบป้องกันบันทึกการเตือน ${state.securityWarnings} ครั้ง`;
@@ -629,6 +642,13 @@ async function sendScoreToSheet({ score, scoreTen, results }) {
 }
 
 function requestSubmitQuiz() {
+  if (state.mode === "test" && state.screenBlocked) {
+    els.feedback.textContent = "กรุณากลับสู่เต็มหน้าจอก่อนส่งคำตอบ";
+    els.feedback.classList.add("bad");
+    updateScreenGuard();
+    return;
+  }
+
   const missing = state.questions.filter((q) => !q.userAnswer).map((q) => q.id);
   if (missing.length === 0) {
     submitQuiz();
@@ -656,6 +676,7 @@ function updateSecurityUI() {
 
 function handleSecurityEvent(reason) {
   if (!state.started || state.submitted || state.lockedBySecurity) return;
+  if (!document.hidden) return;
 
   const now = Date.now();
   if (now - state.lastSecurityAt < 900) return;
@@ -696,6 +717,41 @@ function detectDevtoolsByViewport() {
   const widthGap = window.outerWidth - window.innerWidth;
   const heightGap = window.outerHeight - window.innerHeight;
   if (widthGap > 180 || heightGap > 180) handleSecurityEvent("เปิดเครื่องมือตรวจสอบหน้าเว็บ");
+}
+
+function isLikelySplitScreen() {
+  const viewport = window.visualViewport || window;
+  const width = viewport.width || window.innerWidth;
+  const height = viewport.height || window.innerHeight;
+  const screenWidth = window.screen?.width || width;
+  const screenHeight = window.screen?.height || height;
+  const narrowPhoneArea = width < 360 || height < 520;
+  const reducedTabletWidth = screenWidth >= 700 && width / screenWidth < 0.72;
+  const reducedScreenHeight = screenHeight >= 700 && height / screenHeight < 0.62;
+  return narrowPhoneArea || reducedTabletWidth || reducedScreenHeight;
+}
+
+function updateScreenGuard() {
+  if (!state.started || state.submitted) {
+    state.screenBlocked = false;
+    els.screenGuard.classList.add("hidden");
+    updateProgress();
+    return;
+  }
+
+  const blocked = isLikelySplitScreen();
+  state.screenBlocked = blocked;
+  els.screenGuard.classList.toggle("hidden", !blocked);
+
+  if (blocked) {
+    els.feedback.textContent =
+      state.mode === "test"
+        ? "กรุณากลับสู่เต็มหน้าจอก่อนบันทึกหรือส่งคำตอบ"
+        : "ระบบพบว่าพื้นที่หน้าจอเล็กผิดปกติ แนะนำให้เปิดเต็มหน้าจอเพื่อฝึกเหมือนสอบจริง";
+    els.feedback.classList.toggle("bad", state.mode === "test");
+  }
+
+  updateProgress();
 }
 
 els.studentForm.addEventListener("submit", (event) => {
@@ -747,18 +803,22 @@ els.restartBtn.addEventListener("click", startQuiz);
 els.againBtn.addEventListener("click", startQuiz);
 els.homeBtn.addEventListener("click", () => {
   state.started = false;
+  state.screenBlocked = false;
+  els.screenGuard.classList.add("hidden");
   show(els.homeView);
 });
 els.resumeBtn.addEventListener("click", () => els.focusGuard.classList.add("hidden"));
+els.screenGuardBtn.addEventListener("click", updateScreenGuard);
 
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) handleSecurityEvent("สลับหน้าต่างหรือแอป");
 });
 window.addEventListener("blur", () => handleSecurityEvent("ออกจากหน้าจอแบบฝึกหัด"));
 window.addEventListener("resize", () => {
-  detectDevtoolsByViewport();
+  updateScreenGuard();
   fitExpressionText();
 });
+window.addEventListener("orientationchange", () => window.setTimeout(updateScreenGuard, 250));
 document.addEventListener("keydown", blockBrowserShortcuts);
 document.addEventListener("contextmenu", (event) => {
   if (state.started && !state.submitted) {
