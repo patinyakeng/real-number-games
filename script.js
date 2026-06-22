@@ -173,16 +173,16 @@ function generateFactorQuestion(level) {
   const pool = level < 4 ? pools[0] : level < 7 ? pools[1] : pools[2];
 
   let factorA = [pick(pool.coefs), pick(pool.constants)];
-  let factorB = [pool.coefs[0] === 1 ? 1 : pick([1, 2, 3]), pick(pool.constants)];
+  let factorB = [1, pick(pool.constants)];
   let poly = multiplyFactors(factorA, factorB);
   let attempts = 0;
 
   while (
-    (poly.a > MAX_LEADING_COEFFICIENT || poly.c === 0 || poly.b === 0 || Math.abs(poly.b) > 30 || Math.abs(poly.c) > 72) &&
+    (poly.a > MAX_LEADING_COEFFICIENT || (level >= 7 && level < 10 && (poly.a < 2 || poly.a > 4)) || poly.c === 0 || poly.b === 0 || Math.abs(poly.b) > 30 || Math.abs(poly.c) > 72) &&
     attempts < 40
   ) {
     factorA = [pick(pool.coefs), pick(pool.constants)];
-    factorB = [pool.coefs[0] === 1 ? 1 : pick([1, 2, 3]), pick(pool.constants)];
+    factorB = [1, pick(pool.constants)];
     poly = multiplyFactors(factorA, factorB);
     attempts += 1;
   }
@@ -217,12 +217,23 @@ function generateRootsQuestion(level) {
 }
 
 function generateRemainderQuestion(level) {
-  const degree = randInt(2, 4);
-  const coeffs = Array.from({ length: degree + 1 }, (_, power) => {
-    if (power === degree) return pick([1, 2, 3, 4]);
-    return randInt(-8, 8);
-  });
-  const root = pick([-5, -4, -3, -2, -1, 1, 2, 3, 4, 5]);
+  let degree = randInt(2, 4);
+  let coeffs = [];
+  let root = 1;
+  let remainder = 0;
+  let attempts = 0;
+
+  do {
+    degree = randInt(2, 4);
+    coeffs = Array.from({ length: degree + 1 }, (_, power) => {
+      if (power === degree) return pick([1, 2, 3]);
+      return randInt(-4, 4);
+    });
+    root = pick([-3, -2, -1, 1, 2, 3]);
+    remainder = evaluatePoly(coeffs, root);
+    attempts += 1;
+  } while ((Math.abs(remainder) > 99 || remainder === 0) && attempts < 80);
+
   return {
     id: level + 1,
     kind: "number",
@@ -230,7 +241,7 @@ function generateRemainderQuestion(level) {
     expression: `${formatPolynomialFromCoeffs(coeffs)} หารด้วย (${formatLinearDivisor(root)})`,
     instruction: "จงหาเศษจากการหารพหุนามนี้",
     answerLabel: "เศษ",
-    answerValues: [evaluatePoly(coeffs, root)],
+    answerValues: [remainder],
     userAnswer: null,
   };
 }
