@@ -20,6 +20,7 @@ const els = {
   quizView: document.querySelector("#quizView"),
   classTestView: document.querySelector("#classTestView"),
   classAnswerView: document.querySelector("#classAnswerView"),
+  scoreTableView: document.querySelector("#scoreTableView"),
   resultView: document.querySelector("#resultView"),
   studentForm: document.querySelector("#studentForm"),
   title: document.querySelector("#title"),
@@ -78,6 +79,10 @@ const els = {
   classRestartBtn: document.querySelector("#classRestartBtn"),
   showClassAnswersBtn: document.querySelector("#showClassAnswersBtn"),
   backToClassTestBtn: document.querySelector("#backToClassTestBtn"),
+  showScoreTableBtn: document.querySelector("#showScoreTableBtn"),
+  backToClassAnswersBtn: document.querySelector("#backToClassAnswersBtn"),
+  scoreHomeBtn: document.querySelector("#scoreHomeBtn"),
+  scoreTable: document.querySelector("#scoreTable"),
 };
 
 function randInt(min, max) {
@@ -274,6 +279,13 @@ function makeQuestionKey(q) {
   return `${q.kind}|${q.expression}`;
 }
 
+function questionMatchesRules(q, level) {
+  if (q.answerValues && q.answerValues.some((value) => Math.abs(value) > 99)) return false;
+  if (q.answerFactors && q.answerFactors.flat().some((value) => Math.abs(value) > 99)) return false;
+  if (level >= 7 && level < 10 && q.kind === "factor") return q.poly.a >= 2 && q.poly.a <= 4;
+  return true;
+}
+
 function replaceCurrentQuestion() {
   const used = new Set(state.questions.map(makeQuestionKey));
   const current = state.questions[state.currentIndex];
@@ -281,7 +293,7 @@ function replaceCurrentQuestion() {
 
   let replacement = generateQuestion(state.currentIndex);
   let attempts = 0;
-  while (used.has(makeQuestionKey(replacement)) && attempts < 30) {
+  while ((used.has(makeQuestionKey(replacement)) || !questionMatchesRules(replacement, state.currentIndex)) && attempts < 80) {
     replacement = generateQuestion(state.currentIndex);
     attempts += 1;
   }
@@ -297,7 +309,7 @@ function generateQuestions() {
   while (questions.length < TOTAL_QUESTIONS) {
     const q = generateQuestion(questions.length);
     const key = makeQuestionKey(q);
-    if (!used.has(key)) {
+    if (!used.has(key) && questionMatchesRules(q, questions.length)) {
       used.add(key);
       questions.push(q);
     }
@@ -313,7 +325,7 @@ function generateQuestionSet() {
   while (questions.length < TOTAL_QUESTIONS) {
     const q = generateQuestion(questions.length);
     const key = makeQuestionKey(q);
-    if (!used.has(key)) {
+    if (!used.has(key) && questionMatchesRules(q, questions.length)) {
       used.add(key);
       questions.push(q);
     }
@@ -323,7 +335,7 @@ function generateQuestionSet() {
 }
 
 function show(view) {
-  [els.homeView, els.loginView, els.quizView, els.classTestView, els.classAnswerView, els.resultView].forEach((item) => item.classList.add("hidden"));
+  [els.homeView, els.loginView, els.quizView, els.classTestView, els.classAnswerView, els.scoreTableView, els.resultView].forEach((item) => item.classList.add("hidden"));
   view.classList.remove("hidden");
 }
 
@@ -647,7 +659,8 @@ function renderSolutionCard(q) {
       <strong>ข้อ ${q.id}</strong>
       <div class="expression">${q.expression}</div>
       <p class="instruction">${q.instruction || (q.poly?.a === 1 ? "จงแยกตัวประกอบให้อยู่ในรูป (x + b)(x + d)" : "จงแยกตัวประกอบให้อยู่ในรูป (ax + b)(cx + d)")}</p>
-      <div class="solution-answer">คำตอบ: ${formatExpectedAnswer(q)}</div>
+      <div class="solution-answer-label">คำตอบ</div>
+      <div class="solution-answer expression">${formatExpectedAnswer(q)}</div>
     </div>
   `;
 }
@@ -663,6 +676,20 @@ function convertScoreToTen(score) {
   const raw = (score / TOTAL_QUESTIONS) * 10;
   const lower = Math.floor(raw);
   return raw - lower > 0.5 ? Math.ceil(raw) : lower;
+}
+
+function renderScoreTable() {
+  const rows = [];
+  for (let score = 0; score <= TOTAL_QUESTIONS; score += 1) {
+    rows.push(`
+      <div class="score-cell">
+        <strong>${score}/${TOTAL_QUESTIONS}</strong>
+        <span>${convertScoreToTen(score)}/10</span>
+      </div>
+    `);
+  }
+  els.scoreTable.innerHTML = rows.join("");
+  show(els.scoreTableView);
 }
 
 function submitQuiz() {
@@ -760,6 +787,9 @@ els.classHomeBtn.addEventListener("click", () => show(els.homeView));
 els.classRestartBtn.addEventListener("click", startClassTest);
 els.showClassAnswersBtn.addEventListener("click", showClassAnswers);
 els.backToClassTestBtn.addEventListener("click", () => show(els.classTestView));
+els.showScoreTableBtn.addEventListener("click", renderScoreTable);
+els.backToClassAnswersBtn.addEventListener("click", () => show(els.classAnswerView));
+els.scoreHomeBtn.addEventListener("click", () => show(els.homeView));
 
 window.addEventListener("resize", () => {
   fitExpressionText();

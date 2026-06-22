@@ -179,7 +179,10 @@
             <p class="student-tag">เฉลยท้ายคาบ</p>
             <h2>เฉลยแบบทดสอบระบบจำนวนจริง</h2>
           </div>
-          <button id="backToClassTestBtn" class="btn btn-ghost" type="button">กลับไปหน้าโจทย์</button>
+          <div class="class-actions">
+            <button id="backToClassTestBtn" class="btn btn-ghost" type="button">กลับไปหน้าโจทย์</button>
+            <button id="showScoreTableBtn" class="btn btn-primary" type="button">หน้าคะแนนเต็ม 10</button>
+          </div>
         </header>
 
         <div class="class-split solutions-split">
@@ -192,6 +195,21 @@
             <div id="evenSolutions" class="solution-list"></div>
           </article>
         </div>
+      </section>
+
+      <section id="scoreTableView" class="panel class-test-panel hidden" aria-label="ตารางแปลงคะแนนเต็ม 10">
+        <header class="quiz-header">
+          <div>
+            <p class="student-tag">ตารางแปลงคะแนน</p>
+            <h2>แปลงคะแนนจาก 15 ข้อ เป็นคะแนนเต็ม 10</h2>
+          </div>
+          <div class="class-actions">
+            <button id="backToClassAnswersBtn" class="btn btn-ghost" type="button">กลับไปหน้าเฉลย</button>
+            <button id="scoreHomeBtn" class="btn btn-ghost" type="button">กลับหน้าหลัก</button>
+          </div>
+        </header>
+        <p class="score-help">ให้นักเรียนดูคะแนนที่ตรวจได้จาก 15 ข้อ แล้วกรอกคะแนนเต็ม 10 ตามตารางนี้ หากแปลงแล้วมีเศษเกิน .5 ให้ปัดขึ้น</p>
+        <div id="scoreTable" class="score-table"></div>
       </section>
 
       <section id="resultView" class="panel result-panel hidden" aria-label="ผลคะแนน">

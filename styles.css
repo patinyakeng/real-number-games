@@ -575,15 +575,57 @@ select:focus {
 }
 
 .solution-answer {
-  display: inline-block;
-  justify-self: center;
-  padding: 8px 13px;
+  justify-self: stretch;
+  max-width: 100%;
+  margin: 0;
+  padding: 10px 12px;
   color: #075985;
   background: #e0f2fe;
   border: 1px solid #7dd3fc;
   border-radius: 12px;
-  font-size: 1.05rem;
+  text-align: center;
+  font-size: clamp(1.7rem, 3.8vw, 3.15rem);
   font-weight: 900;
+}
+
+.solution-answer-label {
+  justify-self: center;
+  color: var(--muted);
+  font-weight: 850;
+}
+
+.score-help {
+  margin: 16px 0;
+  color: var(--muted);
+  font-weight: 750;
+  line-height: 1.7;
+}
+
+.score-table {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.score-cell {
+  display: grid;
+  gap: 6px;
+  min-height: 108px;
+  align-content: center;
+  text-align: center;
+  background: #fbfdff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.score-cell strong {
+  font-size: clamp(1.25rem, 2.3vw, 1.9rem);
+}
+
+.score-cell span {
+  color: var(--accent);
+  font-size: clamp(1.6rem, 3vw, 2.5rem);
+  font-weight: 950;
 }
 
 .result-panel {
@@ -694,6 +736,10 @@ select:focus {
 
   .class-split::before {
     display: none;
+  }
+
+  .score-table {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .question-nav {
