@@ -657,10 +657,10 @@ function renderSolutionCard(q) {
   return `
     <div class="solution-card">
       <strong>ข้อ ${q.id}</strong>
-      <div class="expression">${q.expression}</div>
+      <div class="solution-expression">${q.expression}</div>
       <p class="instruction">${q.instruction || (q.poly?.a === 1 ? "จงแยกตัวประกอบให้อยู่ในรูป (x + b)(x + d)" : "จงแยกตัวประกอบให้อยู่ในรูป (ax + b)(cx + d)")}</p>
       <div class="solution-answer-label">คำตอบ</div>
-      <div class="solution-answer expression">${formatExpectedAnswer(q)}</div>
+      <div class="solution-answer">${formatExpectedAnswer(q)}</div>
     </div>
   `;
 }
@@ -790,6 +790,9 @@ els.backToClassTestBtn.addEventListener("click", () => show(els.classTestView));
 els.showScoreTableBtn.addEventListener("click", renderScoreTable);
 els.backToClassAnswersBtn.addEventListener("click", () => show(els.classAnswerView));
 els.scoreHomeBtn.addEventListener("click", () => show(els.homeView));
+document.addEventListener("click", (event) => {
+  if (event.target?.id === "showScoreTableBtn") renderScoreTable();
+});
 
 window.addEventListener("resize", () => {
   fitExpressionText();

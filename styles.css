@@ -567,11 +567,29 @@ select:focus {
 
 .solution-card {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   padding: 14px;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 14px;
+}
+
+.solution-expression {
+  max-width: 100%;
+  color: #111827;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.05rem, 1.65vw, 1.38rem);
+  font-weight: 850;
+  line-height: 1.25;
+  text-align: center;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.solution-card .instruction {
+  font-size: 0.88rem;
+  line-height: 1.35;
 }
 
 .solution-answer {
@@ -583,9 +601,12 @@ select:focus {
   background: #e0f2fe;
   border: 1px solid #7dd3fc;
   border-radius: 12px;
+  font-family: Georgia, "Times New Roman", serif;
   text-align: center;
-  font-size: clamp(1.7rem, 3.8vw, 3.15rem);
+  font-size: clamp(1.65rem, 3.2vw, 2.75rem);
+  line-height: 1.08;
   font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
 .solution-answer-label {
