@@ -1,26 +1,25 @@
 const TOTAL_QUESTIONS = 15;
 const MAX_LEADING_COEFFICIENT = 6;
-const MAX_SECURITY_WARNINGS = 3;
 const STORAGE_KEY = "polynomial_factor_player_v1";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwtKgzgF8RsAG6rjE0LbkqB57Mo_vr1SOhovknNoWGY96JcXlJXFT382Ggm1yp6s4NERw/exec";
 
 const state = {
   player: { title: "นาย", name: "", nickname: "", room: "", number: "", testRound: "ครั้งที่ 1" },
   mode: "practice",
   questions: [],
+  oddQuestions: [],
+  evenQuestions: [],
+  classIndex: 0,
   currentIndex: 0,
   started: false,
   submitted: false,
-  securityWarnings: 0,
-  lockedBySecurity: false,
-  screenBlocked: false,
-  lastSecurityAt: 0,
 };
 
 const els = {
   homeView: document.querySelector("#homeView"),
   loginView: document.querySelector("#loginView"),
   quizView: document.querySelector("#quizView"),
+  classTestView: document.querySelector("#classTestView"),
+  classAnswerView: document.querySelector("#classAnswerView"),
   resultView: document.querySelector("#resultView"),
   studentForm: document.querySelector("#studentForm"),
   title: document.querySelector("#title"),
@@ -37,8 +36,6 @@ const els = {
   testModeBtn: document.querySelector("#testModeBtn"),
   studentTag: document.querySelector("#studentTag"),
   restartBtn: document.querySelector("#restartBtn"),
-  securityStrip: document.querySelector("#securityStrip"),
-  securityText: document.querySelector("#securityText"),
   questionNav: document.querySelector("#questionNav"),
   expression: document.querySelector("#expression"),
   instruction: document.querySelector("#instruction"),
@@ -66,17 +63,21 @@ const els = {
   resultList: document.querySelector("#resultList"),
   againBtn: document.querySelector("#againBtn"),
   homeBtn: document.querySelector("#homeBtn"),
-  focusGuard: document.querySelector("#focusGuard"),
-  resumeBtn: document.querySelector("#resumeBtn"),
-  screenGuard: document.querySelector("#screenGuard"),
-  screenGuardBtn: document.querySelector("#screenGuardBtn"),
-  testModeModal: document.querySelector("#testModeModal"),
-  startTestModeBtn: document.querySelector("#startTestModeBtn"),
-  cancelTestModeBtn: document.querySelector("#cancelTestModeBtn"),
   submitModal: document.querySelector("#submitModal"),
   missingText: document.querySelector("#missingText"),
   confirmSubmitBtn: document.querySelector("#confirmSubmitBtn"),
   continueBtn: document.querySelector("#continueBtn"),
+  classQuestionNav: document.querySelector("#classQuestionNav"),
+  oddProblem: document.querySelector("#oddProblem"),
+  evenProblem: document.querySelector("#evenProblem"),
+  oddSolutions: document.querySelector("#oddSolutions"),
+  evenSolutions: document.querySelector("#evenSolutions"),
+  classPrevBtn: document.querySelector("#classPrevBtn"),
+  classNextBtn: document.querySelector("#classNextBtn"),
+  classHomeBtn: document.querySelector("#classHomeBtn"),
+  classRestartBtn: document.querySelector("#classRestartBtn"),
+  showClassAnswersBtn: document.querySelector("#showClassAnswersBtn"),
+  backToClassTestBtn: document.querySelector("#backToClassTestBtn"),
 };
 
 function randInt(min, max) {
@@ -191,6 +192,7 @@ function generateFactorQuestion(level) {
     kind: "factor",
     topic: pool.topic,
     poly,
+    answerFactors: [factorA, factorB],
     expression: formatPolynomial(poly),
     userAnswer: null,
   };
@@ -293,8 +295,24 @@ function generateQuestions() {
   state.questions = questions;
 }
 
+function generateQuestionSet() {
+  const used = new Set();
+  const questions = [];
+
+  while (questions.length < TOTAL_QUESTIONS) {
+    const q = generateQuestion(questions.length);
+    const key = makeQuestionKey(q);
+    if (!used.has(key)) {
+      used.add(key);
+      questions.push(q);
+    }
+  }
+
+  return questions;
+}
+
 function show(view) {
-  [els.homeView, els.loginView, els.quizView, els.resultView].forEach((item) => item.classList.add("hidden"));
+  [els.homeView, els.loginView, els.quizView, els.classTestView, els.classAnswerView, els.resultView].forEach((item) => item.classList.add("hidden"));
   view.classList.remove("hidden");
 }
 
@@ -345,20 +363,14 @@ function startQuiz() {
   state.currentIndex = 0;
   state.started = true;
   state.submitted = false;
-  state.securityWarnings = 0;
-  state.lockedBySecurity = false;
-  state.screenBlocked = false;
   els.submitModal.classList.add("hidden");
-  els.screenGuard.classList.add("hidden");
   els.studentTag.textContent = makeStudentTag();
   els.feedback.textContent = "พร้อมทำข้อแรกแล้ว";
   els.feedback.classList.remove("bad");
   show(els.quizView);
   buildNav();
   renderQuestion();
-  updateSecurityUI();
   updateProgress();
-  updateScreenGuard();
 }
 
 function makeStudentTag() {
@@ -414,6 +426,64 @@ function fitExpressionText() {
       els.expression.style.fontSize = `${size}px`;
     }
   });
+}
+
+function fitClassExpressions() {
+  document.querySelectorAll(".class-problem .expression").forEach((node) => {
+    node.style.fontSize = "";
+    window.requestAnimationFrame(() => {
+      const maxSize = Number.parseFloat(getComputedStyle(node).fontSize);
+      const minSize = window.innerWidth <= 560 ? 14 : 18;
+      let size = maxSize;
+      while (node.scrollWidth > node.clientWidth && size > minSize) {
+        size -= 1;
+        node.style.fontSize = `${size}px`;
+      }
+    });
+  });
+}
+
+function renderClassProblem(q) {
+  return `
+    <div class="class-problem">
+      <div class="expression">${q.expression}</div>
+      <p class="instruction">${q.instruction || (q.poly?.a === 1 ? "จงแยกตัวประกอบให้อยู่ในรูป (x + b)(x + d)" : "จงแยกตัวประกอบให้อยู่ในรูป (ax + b)(cx + d)")}</p>
+    </div>
+  `;
+}
+
+function startClassTest() {
+  state.mode = "class";
+  state.oddQuestions = generateQuestionSet();
+  state.evenQuestions = generateQuestionSet();
+  state.classIndex = 0;
+  buildClassNav();
+  renderClassPair();
+  show(els.classTestView);
+}
+
+function buildClassNav() {
+  els.classQuestionNav.innerHTML = "";
+  state.oddQuestions.forEach((q, index) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "qbtn";
+    btn.textContent = q.id;
+    btn.addEventListener("click", () => {
+      state.classIndex = index;
+      renderClassPair();
+    });
+    els.classQuestionNav.append(btn);
+  });
+}
+
+function renderClassPair() {
+  els.oddProblem.innerHTML = renderClassProblem(state.oddQuestions[state.classIndex]);
+  els.evenProblem.innerHTML = renderClassProblem(state.evenQuestions[state.classIndex]);
+  [...els.classQuestionNav.children].forEach((btn, index) => btn.classList.toggle("current", index === state.classIndex));
+  els.classPrevBtn.disabled = state.classIndex === 0;
+  els.classNextBtn.disabled = state.classIndex === TOTAL_QUESTIONS - 1;
+  fitClassExpressions();
 }
 
 function fillAnswer(answer) {
@@ -477,13 +547,6 @@ function readAnswer() {
 }
 
 function saveCurrentAnswer() {
-  if (state.lockedBySecurity) return;
-  if (state.mode === "test" && state.screenBlocked) {
-    els.feedback.textContent = "กรุณากลับสู่เต็มหน้าจอก่อนบันทึกคำตอบ";
-    els.feedback.classList.add("bad");
-    return;
-  }
-
   const answer = readAnswer();
   const q = state.questions[state.currentIndex];
   if (!answer || (q.kind === "factor" && (answer.a1 === 0 || answer.a2 === 0))) {
@@ -524,7 +587,7 @@ function updateProgress() {
   const answered = state.questions.filter((q) => q.userAnswer).length;
   els.progressText.textContent = `ตอบแล้ว ${answered} / ${TOTAL_QUESTIONS}`;
   els.progressBar.style.width = `${(answered / TOTAL_QUESTIONS) * 100}%`;
-  els.submitBtn.disabled = state.lockedBySecurity || (state.mode === "test" && state.screenBlocked);
+  els.submitBtn.disabled = false;
 }
 
 function updateButtons() {
@@ -554,6 +617,37 @@ function formatAnswer(answer) {
   return `(${answer.a1}x ${answer.b1 >= 0 ? "+" : "-"} ${Math.abs(answer.b1)})(${answer.a2}x ${answer.b2 >= 0 ? "+" : "-"} ${Math.abs(answer.b2)})`;
 }
 
+function formatFactorPair(factor) {
+  const [coef, constant] = factor;
+  const xTerm = coef === 1 ? "x" : coef === -1 ? "-x" : `${coef}x`;
+  return `(${xTerm} ${constant >= 0 ? "+" : "-"} ${Math.abs(constant)})`;
+}
+
+function formatExpectedAnswer(q) {
+  if (q.kind === "factor") {
+    return `${formatFactorPair(q.answerFactors[0])}${formatFactorPair(q.answerFactors[1])}`;
+  }
+  return q.answerValues.join(", ");
+}
+
+function renderSolutionCard(q) {
+  return `
+    <div class="solution-card">
+      <strong>ข้อ ${q.id}</strong>
+      <div class="expression">${q.expression}</div>
+      <p class="instruction">${q.instruction || (q.poly?.a === 1 ? "จงแยกตัวประกอบให้อยู่ในรูป (x + b)(x + d)" : "จงแยกตัวประกอบให้อยู่ในรูป (ax + b)(cx + d)")}</p>
+      <div class="solution-answer">คำตอบ: ${formatExpectedAnswer(q)}</div>
+    </div>
+  `;
+}
+
+function showClassAnswers() {
+  els.oddSolutions.innerHTML = state.oddQuestions.map(renderSolutionCard).join("");
+  els.evenSolutions.innerHTML = state.evenQuestions.map(renderSolutionCard).join("");
+  show(els.classAnswerView);
+  fitClassExpressions();
+}
+
 function convertScoreToTen(score) {
   const raw = (score / TOTAL_QUESTIONS) * 10;
   const lower = Math.floor(raw);
@@ -567,11 +661,9 @@ function submitQuiz() {
   const scoreTen = convertScoreToTen(score);
 
   state.submitted = true;
-  state.screenBlocked = false;
-  els.screenGuard.classList.add("hidden");
   els.scoreLine.textContent = `คะแนนรวม: ${score} / ${TOTAL_QUESTIONS}`;
   els.scoreTenLine.textContent = `คิดเป็น ${scoreTen}/10 คะแนน`;
-  els.securitySummary.textContent = `ระบบป้องกันบันทึกการเตือน ${state.securityWarnings} ครั้ง`;
+  els.securitySummary.textContent = "";
   els.sheetMsg.textContent = "";
   els.resultList.innerHTML = "";
 
@@ -586,69 +678,9 @@ function submitQuiz() {
   });
 
   show(els.resultView);
-  sendScoreToSheet({ score, scoreTen, results });
-}
-
-async function sendScoreToSheet({ score, scoreTen, results }) {
-  if (state.mode !== "test") {
-    els.sheetMsg.textContent = "โหมดทบทวน: ไม่ส่งคะแนนไปยังครูผู้สอน";
-    return;
-  }
-
-  if (!GAS_URL) {
-    els.sheetMsg.textContent = "ยังไม่ได้ตั้งค่า Google Sheet URL จึงยังไม่สามารถส่งคะแนนได้";
-    return;
-  }
-
-  const payload = {
-    submittedAt: new Date().toISOString(),
-    mode: state.mode,
-    title: state.player.title,
-    name: state.player.name,
-    nickname: state.player.nickname,
-    room: state.player.room,
-    number: state.player.number,
-    testRound: state.player.testRound,
-    score,
-    total: TOTAL_QUESTIONS,
-    scoreTen,
-    securityWarnings: state.securityWarnings,
-    details: results.map(({ q, correct }) => ({
-      id: q.id,
-      kind: q.kind,
-      expression: q.expression,
-      instruction: q.instruction || "",
-      userAnswer: formatAnswer(q.userAnswer),
-      correct,
-    })),
-  };
-
-  const form = new URLSearchParams();
-  form.append("payload", JSON.stringify(payload));
-  els.sheetMsg.textContent = "กำลังส่งคะแนนไปยัง Google Sheet...";
-
-  try {
-    const response = await fetch(GAS_URL, { method: "POST", body: form, credentials: "omit" });
-    if (!response.ok) throw new Error("Non-OK response");
-    els.sheetMsg.textContent = "ส่งคะแนนไปยัง Google Sheet แล้ว";
-  } catch (_) {
-    try {
-      await fetch(GAS_URL, { method: "POST", mode: "no-cors", body: form, keepalive: true, credentials: "omit" });
-      els.sheetMsg.textContent = "ส่งคะแนนไปยัง Google Sheet แล้ว";
-    } catch (error) {
-      els.sheetMsg.textContent = "ส่งคะแนนไม่สำเร็จ กรุณาตรวจสอบ Google Sheet URL";
-    }
-  }
 }
 
 function requestSubmitQuiz() {
-  if (state.mode === "test" && state.screenBlocked) {
-    els.feedback.textContent = "กรุณากลับสู่เต็มหน้าจอก่อนส่งคำตอบ";
-    els.feedback.classList.add("bad");
-    updateScreenGuard();
-    return;
-  }
-
   const missing = state.questions.filter((q) => !q.userAnswer).map((q) => q.id);
   if (missing.length === 0) {
     submitQuiz();
@@ -657,101 +689,6 @@ function requestSubmitQuiz() {
 
   els.missingText.textContent = `ยังไม่ได้ตอบข้อ ${missing.join(", ")} ต้องการส่งคำตอบเลยหรือไม่`;
   els.submitModal.classList.remove("hidden");
-}
-
-function updateSecurityUI() {
-  els.securityStrip.classList.toggle("alert", state.securityWarnings > 0 && !state.lockedBySecurity);
-  els.securityStrip.classList.toggle("blocked", state.lockedBySecurity);
-
-  if (state.lockedBySecurity) {
-    els.securityText.textContent = `สลับหน้าจอครบ ${MAX_SECURITY_WARNINGS} ครั้ง ระบบปิดการส่งคำตอบชุดนี้แล้ว กรุณาเริ่มใหม่`;
-    return;
-  }
-
-  els.securityText.textContent =
-    state.securityWarnings === 0
-      ? "หากสลับหน้าต่าง แอป หรือออกจากหน้านี้ ระบบจะสุ่มโจทย์ข้อปัจจุบันใหม่และบันทึกการเตือน"
-      : `ตรวจพบการออกจากหน้าจอ ${state.securityWarnings} ครั้ง หากครบ ${MAX_SECURITY_WARNINGS} ครั้งจะต้องเริ่มใหม่`;
-}
-
-function handleSecurityEvent(reason) {
-  if (!state.started || state.submitted || state.lockedBySecurity) return;
-  if (!document.hidden) return;
-
-  const now = Date.now();
-  if (now - state.lastSecurityAt < 900) return;
-  state.lastSecurityAt = now;
-  state.securityWarnings += 1;
-  replaceCurrentQuestion();
-  renderQuestion();
-
-  if (state.securityWarnings >= MAX_SECURITY_WARNINGS) {
-    state.lockedBySecurity = true;
-    els.feedback.textContent = "ระบบปิดการส่งคำตอบแล้ว เพราะมีการออกจากหน้าจอหลายครั้ง";
-    els.feedback.classList.add("bad");
-  } else {
-    els.feedback.textContent = `ระบบตรวจพบการ${reason} จึงสุ่มโจทย์ข้อปัจจุบันใหม่`;
-    els.feedback.classList.add("bad");
-  }
-
-  els.focusGuard.classList.remove("hidden");
-  updateSecurityUI();
-  updateProgress();
-}
-
-function blockBrowserShortcuts(event) {
-  const key = event.key.toLowerCase();
-  const blocked =
-    key === "f12" ||
-    (event.ctrlKey && event.shiftKey && ["i", "j", "c"].includes(key)) ||
-    (event.ctrlKey && ["u", "s", "p"].includes(key));
-
-  if (blocked) {
-    event.preventDefault();
-    handleSecurityEvent("ใช้คีย์ลัดที่ไม่อนุญาต");
-  }
-}
-
-function detectDevtoolsByViewport() {
-  if (!state.started || state.submitted || state.lockedBySecurity) return;
-  const widthGap = window.outerWidth - window.innerWidth;
-  const heightGap = window.outerHeight - window.innerHeight;
-  if (widthGap > 180 || heightGap > 180) handleSecurityEvent("เปิดเครื่องมือตรวจสอบหน้าเว็บ");
-}
-
-function isLikelySplitScreen() {
-  const viewport = window.visualViewport || window;
-  const width = viewport.width || window.innerWidth;
-  const height = viewport.height || window.innerHeight;
-  const screenWidth = window.screen?.width || width;
-  const screenHeight = window.screen?.height || height;
-  const narrowPhoneArea = width < 360 || height < 520;
-  const reducedTabletWidth = screenWidth >= 700 && width / screenWidth < 0.72;
-  const reducedScreenHeight = screenHeight >= 700 && height / screenHeight < 0.62;
-  return narrowPhoneArea || reducedTabletWidth || reducedScreenHeight;
-}
-
-function updateScreenGuard() {
-  if (!state.started || state.submitted) {
-    state.screenBlocked = false;
-    els.screenGuard.classList.add("hidden");
-    updateProgress();
-    return;
-  }
-
-  const blocked = isLikelySplitScreen();
-  state.screenBlocked = blocked;
-  els.screenGuard.classList.toggle("hidden", !blocked);
-
-  if (blocked) {
-    els.feedback.textContent =
-      state.mode === "test"
-        ? "กรุณากลับสู่เต็มหน้าจอก่อนบันทึกหรือส่งคำตอบ"
-        : "ระบบพบว่าพื้นที่หน้าจอเล็กผิดปกติ แนะนำให้เปิดเต็มหน้าจอเพื่อฝึกเหมือนสอบจริง";
-    els.feedback.classList.toggle("bad", state.mode === "test");
-  }
-
-  updateProgress();
 }
 
 els.studentForm.addEventListener("submit", (event) => {
@@ -775,12 +712,7 @@ els.studentForm.addEventListener("submit", (event) => {
 });
 
 els.practiceModeBtn.addEventListener("click", startPracticeImmediately);
-els.testModeBtn.addEventListener("click", () => els.testModeModal.classList.remove("hidden"));
-els.startTestModeBtn.addEventListener("click", () => {
-  els.testModeModal.classList.add("hidden");
-  enterMode("test");
-});
-els.cancelTestModeBtn.addEventListener("click", () => els.testModeModal.classList.add("hidden"));
+els.testModeBtn.addEventListener("click", startClassTest);
 
 els.answerForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -803,34 +735,24 @@ els.restartBtn.addEventListener("click", startQuiz);
 els.againBtn.addEventListener("click", startQuiz);
 els.homeBtn.addEventListener("click", () => {
   state.started = false;
-  state.screenBlocked = false;
-  els.screenGuard.classList.add("hidden");
   show(els.homeView);
 });
-els.resumeBtn.addEventListener("click", () => els.focusGuard.classList.add("hidden"));
-els.screenGuardBtn.addEventListener("click", updateScreenGuard);
+els.classPrevBtn.addEventListener("click", () => {
+  state.classIndex = Math.max(0, state.classIndex - 1);
+  renderClassPair();
+});
+els.classNextBtn.addEventListener("click", () => {
+  state.classIndex = Math.min(TOTAL_QUESTIONS - 1, state.classIndex + 1);
+  renderClassPair();
+});
+els.classHomeBtn.addEventListener("click", () => show(els.homeView));
+els.classRestartBtn.addEventListener("click", startClassTest);
+els.showClassAnswersBtn.addEventListener("click", showClassAnswers);
+els.backToClassTestBtn.addEventListener("click", () => show(els.classTestView));
 
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) handleSecurityEvent("สลับหน้าต่างหรือแอป");
-});
-window.addEventListener("blur", () => handleSecurityEvent("ออกจากหน้าจอแบบฝึกหัด"));
 window.addEventListener("resize", () => {
-  updateScreenGuard();
   fitExpressionText();
-});
-window.addEventListener("orientationchange", () => window.setTimeout(updateScreenGuard, 250));
-document.addEventListener("keydown", blockBrowserShortcuts);
-document.addEventListener("contextmenu", (event) => {
-  if (state.started && !state.submitted) {
-    event.preventDefault();
-    handleSecurityEvent("คลิกขวา");
-  }
-});
-document.addEventListener("copy", (event) => {
-  if (state.started && !state.submitted) event.preventDefault();
-});
-document.addEventListener("paste", (event) => {
-  if (state.started && !state.submitted) event.preventDefault();
+  fitClassExpressions();
 });
 
 restorePlayer();

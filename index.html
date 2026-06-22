@@ -13,9 +13,9 @@
           <h1>ระบบจำนวนจริง</h1>
           <h2 class="home-subtitle">การแยกตัวประกอบพหุนาม ทฤษฎีบทเศษเหลือ และการหารสังเคราะห์</h2>
           <div class="home-description">
-            <p><strong>ทบทวน :</strong> ใช้ฝึกทำโจทย์เพื่อเตรียมความพร้อมก่อนเรียนหรือก่อนสอบ คะแนนจะไม่ถูกส่งไปยังครูผู้สอน</p>
-            <p><strong>แบบทดสอบ :</strong> ใช้สำหรับการทดสอบในห้องเรียนจริง ระบบจะบันทึกคะแนนและส่งให้ครูผู้สอน</p>
-            <p class="home-warning">เว็บไซต์มีระบบป้องกันการสลับหน้าจอและการใช้ application ภายนอก หากมีการสลับหน้าจอ ระบบจะสุ่มโจทย์ข้อปัจจุบันใหม่และบันทึกจำนวนครั้งที่เตือน หากถูกเตือนครบ 3 ครั้ง จะปิดการส่งคำตอบชุดนั้นและต้องเริ่มใหม่</p>
+            <p><strong>ทบทวน :</strong> นักเรียนเปิดฝึกทำโจทย์ด้วยตนเอง ระบบตรวจคำตอบและสรุปคะแนนให้ทันที</p>
+            <p><strong>แบบทดสอบ :</strong> ครูเปิดหน้าจอเดียวเพื่อฉายโจทย์ในห้องเรียน โดยแยกชุดโจทย์เลขที่คี่และเลขที่คู่ แล้วกดเฉลยท้ายคาบ</p>
+            <p class="home-warning">โหมดแบบทดสอบไม่มีการส่งคะแนนออกจากเว็บและไม่มีระบบตรวจการสลับหน้าจอ เพราะครูเป็นผู้ควบคุมหน้าจอสำหรับฉายโปรเจคเตอร์</p>
           </div>
         </div>
 
@@ -26,7 +26,7 @@
           </button>
           <button id="testModeBtn" class="mode-choice test" type="button">
             <strong>แบบทดสอบ</strong>
-            <span>ใช้ทำแบบทดสอบในห้องเรียนจริง</span>
+            <span>ครูใช้ฉายโจทย์หน้าห้อง แยกเลขที่คี่และเลขที่คู่</span>
           </button>
         </div>
       </section>
@@ -87,15 +87,10 @@
         <header class="quiz-header">
           <div>
             <p id="studentTag" class="student-tag">นักเรียน: -</p>
-            <h2>แบบทดสอบจำนวน 15 ข้อ</h2>
+            <h2>แบบฝึกทบทวนจำนวน 15 ข้อ</h2>
           </div>
           <button id="restartBtn" class="btn btn-ghost" type="button">เริ่มใหม่</button>
         </header>
-
-        <div id="securityStrip" class="security-strip">
-          <strong>ระบบป้องกันเปิดอยู่</strong>
-          <span id="securityText">หากสลับหน้าต่าง แอป หรือออกจากหน้านี้ ระบบจะสุ่มโจทย์ข้อปัจจุบันใหม่และบันทึกการเตือน</span>
-        </div>
 
         <nav id="questionNav" class="question-nav" aria-label="เลือกข้อ"></nav>
 
@@ -147,6 +142,59 @@
         </footer>
       </section>
 
+      <section id="classTestView" class="panel class-test-panel hidden" aria-label="แบบทดสอบหน้าห้อง">
+        <header class="quiz-header">
+          <div>
+            <p class="student-tag">โหมดแบบทดสอบหน้าห้อง</p>
+            <h2>แบบทดสอบระบบจำนวนจริง 15 ข้อ</h2>
+          </div>
+          <div class="class-actions">
+            <button id="classRestartBtn" class="btn btn-ghost" type="button">สุ่มชุดใหม่</button>
+            <button id="showClassAnswersBtn" class="btn btn-submit" type="button">เฉลย</button>
+          </div>
+        </header>
+
+        <nav id="classQuestionNav" class="question-nav" aria-label="เลือกข้อแบบทดสอบหน้าห้อง"></nav>
+
+        <div class="class-split">
+          <article class="class-side">
+            <h3>เลขที่คี่</h3>
+            <div id="oddProblem"></div>
+          </article>
+          <article class="class-side">
+            <h3>เลขที่คู่</h3>
+            <div id="evenProblem"></div>
+          </article>
+        </div>
+
+        <footer class="quiz-footer">
+          <button id="classPrevBtn" class="btn btn-ghost" type="button">ก่อนหน้า</button>
+          <button id="classHomeBtn" class="btn btn-ghost" type="button">กลับหน้าหลัก</button>
+          <button id="classNextBtn" class="btn btn-primary" type="button">ถัดไป</button>
+        </footer>
+      </section>
+
+      <section id="classAnswerView" class="panel class-test-panel hidden" aria-label="เฉลยแบบทดสอบหน้าห้อง">
+        <header class="quiz-header">
+          <div>
+            <p class="student-tag">เฉลยท้ายคาบ</p>
+            <h2>เฉลยแบบทดสอบระบบจำนวนจริง</h2>
+          </div>
+          <button id="backToClassTestBtn" class="btn btn-ghost" type="button">กลับไปหน้าโจทย์</button>
+        </header>
+
+        <div class="class-split solutions-split">
+          <article class="class-side">
+            <h3>เลขที่คี่</h3>
+            <div id="oddSolutions" class="solution-list"></div>
+          </article>
+          <article class="class-side">
+            <h3>เลขที่คู่</h3>
+            <div id="evenSolutions" class="solution-list"></div>
+          </article>
+        </div>
+      </section>
+
       <section id="resultView" class="panel result-panel hidden" aria-label="ผลคะแนน">
         <h2>ผลการทำแบบฝึกหัด</h2>
         <p id="scoreLine" class="score-line">คะแนนรวม: 0 / 15</p>
@@ -161,33 +209,7 @@
       </section>
     </main>
 
-    <div id="focusGuard" class="focus-guard hidden" role="alert">
-      <div>
-        <strong>ระบบตรวจพบการออกจากหน้าจอแบบฝึกหัด</strong>
-        <p>โจทย์ข้อปัจจุบันถูกสุ่มใหม่แล้ว กรุณากลับมาทำต่อในหน้านี้เท่านั้น</p>
-        <button id="resumeBtn" class="btn btn-primary" type="button">รับทราบ</button>
-      </div>
-    </div>
-
-    <div id="screenGuard" class="focus-guard hidden" role="alert">
-      <div>
-        <strong>กรุณาเปิดเว็บแบบเต็มหน้าจอ</strong>
-        <p>ระบบตรวจพบว่าพื้นที่แสดงผลเล็กผิดปกติ อาจเกิดจากการเปิดหลายแอปพร้อมกันหรือ split screen กรุณากลับมาใช้เว็บแบบเต็มหน้าจอก่อนทำต่อ</p>
-        <p>กรณีนี้จะไม่ถูกนับเป็นการเตือน แต่ในโหมดแบบทดสอบจะยังไม่ให้บันทึกหรือส่งคำตอบจนกว่าจะกลับสู่ขนาดหน้าจอปกติ</p>
-        <button id="screenGuardBtn" class="btn btn-primary" type="button">ตรวจอีกครั้ง</button>
-      </div>
-    </div>
-
-    <div id="testModeModal" class="focus-guard hidden" role="dialog" aria-modal="true" aria-labelledby="testModeTitle">
-      <div>
-        <strong id="testModeTitle">เข้าสู่โหมดแบบทดสอบ</strong>
-        <p>ใช้สำหรับทดสอบความรู้ในห้องสอบจริงเท่านั้น และจะมีการส่งคะแนนที่ทำได้ไปยังครูผู้สอน</p>
-        <div class="modal-actions">
-          <button id="startTestModeBtn" class="btn btn-submit" type="button">เริ่มทำแบบทดสอบ</button>
-          <button id="cancelTestModeBtn" class="btn btn-ghost" type="button">ยกเลิก</button>
-        </div>
-      </div>
-    </div>
+    <footer class="site-credit">โดย คุณครูปฏิญญา มุ่งหมาย กลุ่มสาระการเรียนรู้คณิตศาสตร์ โรงเรียนขอนแก่นวิทยายน</footer>
 
     <div id="submitModal" class="focus-guard hidden" role="dialog" aria-modal="true" aria-labelledby="submitModalTitle">
       <div>
