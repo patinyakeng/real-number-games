@@ -456,6 +456,19 @@ select:focus {
   font-weight: 850;
 }
 
+.signed-number-row {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.signed-number-row select {
+  min-height: 56px;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
 .factor-row select {
   width: 64px;
   min-height: 52px;

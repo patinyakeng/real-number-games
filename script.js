@@ -533,12 +533,22 @@ function renderNumberInputs(q, answer) {
   for (let index = 0; index < count; index += 1) {
     const label = document.createElement("label");
     label.textContent = count === 1 ? q.answerLabel || "คำตอบ" : `ค่า x ช่องที่ ${index + 1}`;
+    const row = document.createElement("div");
+    row.className = "signed-number-row";
+    const sign = document.createElement("select");
+    sign.dataset.answerSignIndex = index.toString();
+    sign.setAttribute("aria-label", `เครื่องหมายคำตอบช่องที่ ${index + 1}`);
+    sign.innerHTML = '<option value="1">+</option><option value="-1">-</option>';
     const input = document.createElement("input");
     input.type = "number";
     input.inputMode = "numeric";
+    input.min = "0";
     input.dataset.answerIndex = index.toString();
-    input.value = answer?.values?.[index] ?? "";
-    label.append(input);
+    const value = answer?.values?.[index];
+    sign.value = Number(value ?? 0) < 0 ? "-1" : "1";
+    input.value = value === undefined || value === "" ? "" : Math.abs(value);
+    row.append(sign, input);
+    label.append(row);
     els.numberAnswer.append(label);
   }
 }
@@ -546,9 +556,14 @@ function renderNumberInputs(q, answer) {
 function readAnswer() {
   const q = state.questions[state.currentIndex];
   if (q.kind !== "factor") {
-    const values = [...els.numberAnswer.querySelectorAll("input")].map((input) => input.value);
-    if (values.some((value) => value === "")) return null;
-    return { values: values.map(Number) };
+    const inputs = [...els.numberAnswer.querySelectorAll("input[data-answer-index]")];
+    const values = inputs.map((input) => {
+      const sign = els.numberAnswer.querySelector(`select[data-answer-sign-index="${input.dataset.answerIndex}"]`);
+      if (input.value === "") return "";
+      return Number(sign?.value || 1) * Number(input.value);
+    });
+    if (values.some((value) => value === "" || Number.isNaN(value))) return null;
+    return { values };
   }
 
   const isMonic = q.poly.a === 1;
