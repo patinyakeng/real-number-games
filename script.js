@@ -93,6 +93,23 @@ function pick(items) {
   return items[randInt(0, items.length - 1)];
 }
 
+function gcd(a, b) {
+  let x = Math.abs(a);
+  let y = Math.abs(b);
+  while (y !== 0) {
+    const next = x % y;
+    x = y;
+    y = next;
+  }
+  return x;
+}
+
+function pickPrimitiveFactor(coefs, constants) {
+  const coef = pick(coefs);
+  const validConstants = constants.filter((constant) => gcd(coef, constant) === 1);
+  return [coef, pick(validConstants)];
+}
+
 function shuffle(items) {
   return items
     .map((value) => ({ value, order: Math.random() }))
@@ -177,7 +194,7 @@ function generateFactorQuestion(level) {
   ];
   const pool = level < 4 ? pools[0] : level < 7 ? pools[1] : pools[2];
 
-  let factorA = [pick(pool.coefs), pick(pool.constants)];
+  let factorA = pickPrimitiveFactor(pool.coefs, pool.constants);
   let factorB = [1, pick(pool.constants)];
   let poly = multiplyFactors(factorA, factorB);
   let attempts = 0;
@@ -186,7 +203,7 @@ function generateFactorQuestion(level) {
     (poly.a > MAX_LEADING_COEFFICIENT || (level >= 7 && level < 10 && (poly.a < 2 || poly.a > 4)) || poly.c === 0 || poly.b === 0 || Math.abs(poly.b) > 30 || Math.abs(poly.c) > 72) &&
     attempts < 40
   ) {
-    factorA = [pick(pool.coefs), pick(pool.constants)];
+    factorA = pickPrimitiveFactor(pool.coefs, pool.constants);
     factorB = [1, pick(pool.constants)];
     poly = multiplyFactors(factorA, factorB);
     attempts += 1;
@@ -282,6 +299,7 @@ function makeQuestionKey(q) {
 function questionMatchesRules(q, level) {
   if (q.answerValues && q.answerValues.some((value) => Math.abs(value) > 99)) return false;
   if (q.answerFactors && q.answerFactors.flat().some((value) => Math.abs(value) > 99)) return false;
+  if (q.answerFactors && q.answerFactors.some(([coef, constant]) => gcd(coef, constant) !== 1)) return false;
   if (level >= 7 && level < 10 && q.kind === "factor") return q.poly.a >= 2 && q.poly.a <= 4;
   return true;
 }
